@@ -1,33 +1,10 @@
 import React from "react";
 import Router from 'next/router';
-import { GetServerSideProps } from "next"
 import ReactMarkdown from "react-markdown"
 import Layout from "../../components/Layout"
-import { PostProps } from "../../components/Post"
-import prisma from '../../lib/prisma';
 import { useSession } from 'next-auth/react';
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
-  const post = await prisma.post.findUnique({
-    where: {
-      id: Number(params.id),
-    },
-    include: {
-      author: {
-        select: {
-          name: true,
-          email: true,
-        }
-      }
-    }
-  })
-
-  return {
-    props: { post }
-  }
-}
-
-const Post: React.FC<PostProps> = (props) => {
+const Post = ({ post }) => {
   const { data: session, status} = useSession();
 
   if ( status == "loading") {
@@ -35,11 +12,11 @@ const Post: React.FC<PostProps> = (props) => {
   }
 
   const userHasValidSession = Boolean(session);
-  const postBelongsToUser = session?.user?.email === props.author?.email;
+  const postBelongsToUser = session?.user?.email === post.author?.email;
 
-  let title = props.title;
+  let title = post.title;
 
-  if (!props.published) {
+  if (!post.published) {
     title = `${title} (Draft)`;
   }
 
@@ -71,13 +48,13 @@ const Post: React.FC<PostProps> = (props) => {
     <Layout>
       <div>
         <h2>{title}</h2>
-        <p>By {props?.author?.name || "Unknown author"}</p>
-        <ReactMarkdown source={props.content} />
-        {!props.published && userHasValidSession && postBelongsToUser && (
-          <button onClick={() => publishPost(props.id)}>Publish</button>
+        <p>By {post?.author?.name || "Unknown author"}</p>
+        <ReactMarkdown source={post.content} />
+        {!post.published && userHasValidSession && postBelongsToUser && (
+          <button onClick={() => publishPost(post.id)}>Publish</button>
         )}
         {userHasValidSession && postBelongsToUser && (
-          <button onClick={() => deletePost(props.id)}>Delete</button>
+          <button onClick={() => deletePost(post.id)}>Delete</button>
         )}
       </div>
       <style jsx>{`
