@@ -3,21 +3,8 @@ import { GetStaticProps } from "next"
 import Layout from "../components/Layout"
 import Post, { PostProps } from "../components/Post"
 
-export const getStaticProps: GetStaticProps = async () => {
-  const feed = [
-    {
-      id: 1,
-      title: "Prisma is the perfect ORM for Next.js",
-      content: "[Prisma](https://github.com/prisma/prisma) and Next.js go _great_ together!",
-      published: false,
-      author: {
-        name: "Nikolas Burk",
-        email: "burk@prisma.io",
-      },
-    },
-  ]
-  return { props: { feed } }
-}
+// Prisma
+import prisma from '../lib/prisma';
 
 type Props = {
   feed: PostProps[]
@@ -54,4 +41,21 @@ const Blog: React.FC<Props> = (props) => {
   )
 }
 
-export default Blog
+export const getStaticProps: GetStaticProps = async () => {
+  const feed = await prisma.post.findMany({
+    where: {
+      published: true,
+    },
+    include: {
+      author: {
+        select: { name: true },
+      }
+    }
+  })
+  
+  return {
+    props: { feed },
+  }
+}
+
+export default Blog;
